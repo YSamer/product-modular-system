@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Modules\ProductFeature\Models\Category;
 use Nwidart\Modules\Facades\Module;
 
 class ProductResource extends Resource
@@ -26,12 +27,17 @@ class ProductResource extends Resource
             Forms\Components\TextInput::make('name')->required(),
             Forms\Components\TextArea::make('description')->required(),
             Forms\Components\TextInput::make('price')->numeric()->required(),
-            Forms\Components\FileUpload::make('image')->image()->required(),
+            Forms\Components\FileUpload::make('image')->image()->nullable(),
         ];
 
         if (Module::isEnabled('ProductFeature')) {
             $formSchema[] = Forms\Components\TextInput::make('discount')->numeric()->nullable();
             $formSchema[] = Forms\Components\FileUpload::make('image2')->image()->nullable();
+            $formSchema[] = Forms\Components\Select::make('category_id')
+                ->label('Category')
+                ->searchable()
+                ->options(Category::all()->pluck('name', 'id'))
+                ->nullable();
         }
         return $form->schema($formSchema);
     }
@@ -46,8 +52,9 @@ class ProductResource extends Resource
 
         // Add discount and image2 columns only if the ProductFeature module is enabled
         if (Module::isEnabled('ProductFeature')) {
-            $tableColumns[] = Tables\Columns\TextColumn::make('discount')->nullable();
-            $tableColumns[] = Tables\Columns\ImageColumn::make('image2')->nullable();
+            $tableColumns[] = Tables\Columns\TextColumn::make('discount');
+            $tableColumns[] = Tables\Columns\ImageColumn::make('image2');
+            $tableColumns[] = Tables\Columns\TextColumn::make('category_id');
         }
         return $table
             ->columns($tableColumns)
