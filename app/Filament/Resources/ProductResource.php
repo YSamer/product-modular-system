@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Nwidart\Modules\Facades\Module;
 
 class ProductResource extends Resource
 {
@@ -21,23 +22,35 @@ class ProductResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')->required(),
-                Forms\Components\TextArea::make('description')->required(),
-                Forms\Components\TextInput::make('price')->numeric()->required(),
-                Forms\Components\FileUpload::make('image')->image()->required(),
-            ]);
+        $formSchema = [
+            Forms\Components\TextInput::make('name')->required(),
+            Forms\Components\TextArea::make('description')->required(),
+            Forms\Components\TextInput::make('price')->numeric()->required(),
+            Forms\Components\FileUpload::make('image')->image()->required(),
+        ];
+
+        if (Module::isEnabled('ProductFeature')) {
+            $formSchema[] = Forms\Components\TextInput::make('discount')->numeric()->nullable();
+            $formSchema[] = Forms\Components\FileUpload::make('image2')->image()->nullable();
+        }
+        return $form->schema($formSchema);
     }
 
     public static function table(Table $table): Table
     {
+        $tableColumns = [
+            Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
+            Tables\Columns\TextColumn::make('price'),
+            Tables\Columns\ImageColumn::make('image'),
+        ];
+
+        // Add discount and image2 columns only if the ProductFeature module is enabled
+        if (Module::isEnabled('ProductFeature')) {
+            $tableColumns[] = Tables\Columns\TextColumn::make('discount')->nullable();
+            $tableColumns[] = Tables\Columns\ImageColumn::make('image2')->nullable();
+        }
         return $table
-            ->columns([
-                Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('price'),
-                Tables\Columns\ImageColumn::make('image'),
-            ])
+            ->columns($tableColumns)
             ->filters([
                 //
             ])
